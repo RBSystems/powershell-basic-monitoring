@@ -63,7 +63,7 @@ $hosts.GetEnumerator() | % {
 $values = @{}
 
 #Job deletion get's weird if we don't let it get it's bearings. 
-Start-Sleep -Milliseconds 2500
+Start-Sleep -Milliseconds 5000
 
 #run until we tell it to stop
 while($true) {
