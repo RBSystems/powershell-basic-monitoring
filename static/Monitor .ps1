@@ -12,7 +12,7 @@ param
 function sendToElk {
     param($element)
 
-    Invoke-WebRequest -Uri "http://avreports.byu.edu/perf-data/test" -Body $(ConvertTo-JSON $element) -Method POST -ContentType "application/json" | Out-NUll
+    Invoke-WebRequest -Uri "ELK URI" -Body $(ConvertTo-JSON $element) -Method POST -ContentType "application/json" | Out-NUll
 }
 
 $Hostnames = Get-Content "hostnames.txt"
