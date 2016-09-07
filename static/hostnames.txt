@@ -1,3 +1,1 @@
-render-a-test
 Tec-7040-itb-01
-Kraken

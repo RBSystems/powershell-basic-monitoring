@@ -9,6 +9,12 @@ param
     ConvertTo-Json $list | Out-File -FilePath "info.json" -Force
 }
 
+function sendToElk {
+    param($element)
+
+    Invoke-WebRequest -Uri "http://avreports.byu.edu/perf-data/test" -Body $(ConvertTo-JSON $element) -Method POST -ContentType "application/json" | Out-NUll
+}
+
 $Hostnames = Get-Content "hostnames.txt"
 
 $hosts = @{}
@@ -42,7 +48,7 @@ $Hostnames | foreach {
            }
         }
 
-        $value | Add-Member -type NoteProperty -Name Timestamp -Value $a.Timestamp.DateTime
+        $value | Add-Member -type NoteProperty -Name Timestamp -Value $(Get-Date $a.Timestamp -Format yyyy\-MM\-dd\THH\:mm\:sszzz)
         $value | Add-Member -type NoteProperty -Name Network -Value $([math]::Round($netValue,2))    
         $value
     }
@@ -76,6 +82,7 @@ while($true) {
             } else {
                 $values.Add($_.Name, $_)
             }
+            sendToElk($_)
             writeToJSON -Map $values
         }
     }
