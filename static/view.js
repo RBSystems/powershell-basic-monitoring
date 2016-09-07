@@ -19,4 +19,4 @@ var update = function() {
 
 update();
 $.ajaxSetup({ cache: false });
-setInterval(update, 1000);
+setInterval(update, 750);

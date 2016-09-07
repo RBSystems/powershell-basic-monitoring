@@ -52,7 +52,7 @@ $jobs = @{}
 
 $hosts.GetEnumerator() | % {
     $job = Start-Job $codeBlock -ArgumentList $_.Value, $_.Key
-    $jobs.add( $_.Key, $job.Id)
+    $jobs.add($job.Id, $_.Key)
 }
 
 #$job = Start-Job $codeBlock -ArgumentList $creds, "Tec-7040-itb-01"
@@ -70,7 +70,6 @@ while($true) {
     $q = Get-Job -State Completed 
     $c = $q | Receive-Job
     if ($c) {
-
         $c | foreach {
             if ($values.ContainsKey($_.Name)) {
                 $values[$_.Name] = $_
@@ -78,12 +77,31 @@ while($true) {
                 $values.Add($_.Name, $_)
             }
             writeToJSON -Map $values
-            Remove-Job -Id $jobs[$_.Name]
-
-            Write-Host("Running")
-            $job = Start-Job $codeBlock -ArgumentList $hosts[$_.Name], $_.Name
-            $jobs[$_.Name] = $job.Id
         }
     }
+
+    #Restart jobs for all completed machines. This way even if one errors out it'll come back when it the machine restarts (or becomes available again) 
+    $q | foreach {
+        Remove-Job -job $_
+        $name = $jobs[$_.Id]
+        $job = Start-Job $codeBlock -ArgumentList $hosts[$name], $name
+        $jobs.Remove($_.Id)
+        $jobs.Add($job.Id, $name)
+    }
+
+    #Run a look through our jobs to see if any have been running for a long time ( > 1min) if so, restart it. 
+    Get-Job | foreach {
+        $span = New-Timespan -Start $_.PSBeginTime -End $(Get-Date)
+        if ($span.TotalSeconds -gt 60) {
+            $name = $jobs[$_.Id]
+            write-Host("Restarting job:" + $_.Id + ": " + $name)
+
+            Remove-Job -job $_ -Force
+            $job = Start-Job $codeBlock -ArgumentList $hosts[$name], $name
+            $jobs.Remove($_.Id)
+            $jobs.Add($job.Id, $name)
+        }
+    }
+
     Start-Sleep -Milliseconds 500
 }
